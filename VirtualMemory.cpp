@@ -93,6 +93,19 @@ uint64_t get_frame()
 
 
 
+uint64_t get_frame()
+{
+    uint64_t unused_index = find_unused_frame();
+    if(unused_index != FAILURE_VALUE)
+    {
+        return unused_index;
+    }
+
+    return 1;
+}
+
+
+
 int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action)
 {
     int current_address;
