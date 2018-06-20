@@ -1,3 +1,5 @@
+
+
 #pragma once
 
 #include <climits>
@@ -19,6 +21,7 @@ typedef int word_t;
 #define PHYSICAL_ADDRESS_WIDTH 10
 // RAM size in words
 #define RAM_SIZE (1LL << PHYSICAL_ADDRESS_WIDTH)
+
 
 // number of bits in a virtual address
 #define VIRTUAL_ADDRESS_WIDTH 20
