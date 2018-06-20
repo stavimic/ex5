@@ -12,6 +12,10 @@ void VMinitialize() {
 }
 
 
+int getBits(uint64_t addr, int lower, int higher){
+    uint64_t num = addr << lower;
+}
+
 int VMread(uint64_t virtualAddress, word_t* value) {
 
     return 1;
