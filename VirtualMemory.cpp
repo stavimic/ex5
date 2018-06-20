@@ -13,6 +13,7 @@ void VMinitialize() {
 
 
 int VMread(uint64_t virtualAddress, word_t* value) {
+
     return 1;
 }
 

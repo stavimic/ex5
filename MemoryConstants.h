@@ -12,8 +12,8 @@ typedef int word_t;
 // in this implementation this is also the number of entries in a table
 #define OFFSET_WIDTH 4
 // page/frame size in words
+// 2^OFFSET_WIDTH
 #define PAGE_SIZE (1LL << OFFSET_WIDTH)
-
 
 // number of bits in a physical address
 #define PHYSICAL_ADDRESS_WIDTH 10
