@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
 
@@ -37,6 +36,7 @@ void clearTable(uint64_t frameIndex)
         PMwrite(frameIndex * PAGE_SIZE + i, 0);
     }
 }
+
 
 
 /*
