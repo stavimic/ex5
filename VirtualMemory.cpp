@@ -53,34 +53,20 @@ void VMinitialize()
 }
 
 
-
 int swap_page()
 {
     return 1;
 }
 
 
-void remove_reference(uint64_t address, int depth)
-{
-    uint64_t left;
-    uint64_t right;
-    // Get the range of the offset bits:
-    get_range(depth, &left, &right);
-    // Get the value of the address within the given range:
-    uint64_t relevant_address = getBits(address, left, right);
-    int current_address;
-    int value;
-    if(depth == TABLES_DEPTH + 1)
-    {
-        // Read from the physical memory:
-        PMread((address * PAGE_SIZE) + relevant_address, &value);
-    }
 
 
-}
-
-
-int find_unused_frame()
+/*
+ * Finds an unused Frame on the RAM.
+ * Returns it's address upon success
+ * Returns 0 upon failure.
+ */
+uint64_t find_unused_frame()
 {
     for(uint64_t index = 1; index < NUM_FRAMES; index++)
     {
@@ -88,14 +74,10 @@ int find_unused_frame()
         PMread(0 + (index * PAGE_SIZE), &value);
         if (value == 0)
         {
-
-            break;
+            return index * PAGE_SIZE;  // Return the address of the unused Frame
         }
-
-
-
     }
-
+    return FAILURE_VALUE;  // No available Frame on the RAM
 }
 
 
