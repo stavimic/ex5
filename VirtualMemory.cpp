@@ -29,6 +29,18 @@ uint64_t get_bits(uint64_t address, uint64_t depth)
 
 
 
+
+uint64_t remove_offset(uint64_t address)
+{
+    uint64_t left = VIRTUAL_ADDRESS_WIDTH - 1;
+    uint64_t right = OFFSET_WIDTH;
+    uint64_t num = (address >> right) & ((1 << (left - right + 1))-1);
+    return num;
+}
+
+
+
+
 void clearTable(uint64_t frameIndex)
 {
     for (uint64_t i = 0; i < PAGE_SIZE; ++i)
@@ -68,11 +80,17 @@ uint64_t find_unused_frame()
         PMread(0 + (index * PAGE_SIZE), &value);
         if (value == 0)
         {
-            return index * PAGE_SIZE;  // Return the address of the unused Frame
+            return index; // Return the index of the unused Frame
         }
     }
     return FAILURE_VALUE;  // No available Frame on the RAM
 }
+
+uint64_t get_frame()
+{
+    return 1;
+}
+
 
 
 int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action)
@@ -123,7 +141,10 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                 PMread(0 + relevant_address, &current_address);
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
-                    // todo find place and load the page
+                    // Find place and load the page:
+                    uint64_t victim_frame_index = get_frame();
+                    uint64_t page_index = remove_offset(virtualAddress);
+                    PMrestore(victim_frame_index, page_index);
                 }
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
@@ -153,11 +174,10 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                 PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
-                    // todo find place and load the page
-
-
-
-                    // todo update parent address to point to the new page
+                    // Find place and load the page:
+                    uint64_t victim_frame_index = get_frame();
+                    uint64_t page_index = remove_offset(virtualAddress);
+                    PMrestore(victim_frame_index, page_index);
                 }
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
