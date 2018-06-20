@@ -86,8 +86,15 @@ uint64_t find_unused_frame()
     return FAILURE_VALUE;  // No available Frame on the RAM
 }
 
+
 uint64_t get_frame()
 {
+    uint64_t unused_index = find_unused_frame();
+    if(unused_index != FAILURE_VALUE)
+    {
+        return unused_index;
+    }
+
     return 1;
 }
 
