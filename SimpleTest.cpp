@@ -5,58 +5,30 @@
 #include <bitset>
 #include <iostream>
 
-void get_range1(uint64_t depth, uint64_t* lower, uint64_t* upper)
+void get_range(uint64_t depth, uint64_t* lower, uint64_t* upper)
 {
     uint64_t remainder = ((VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH) % OFFSET_WIDTH) + depth - depth;
-    if((remainder != 0) & (depth == 1)){
+    if((remainder != 0)&(depth == 1)){
         *lower = VIRTUAL_ADDRESS_WIDTH - 1;
         *upper = VIRTUAL_ADDRESS_WIDTH - remainder;
         return;
     }
 
     if(remainder == 0){
-        *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * ( depth-1 ));
+        *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH*(depth-1));
         *upper = *lower - OFFSET_WIDTH + 1;
         return;
     }
 
-    *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * ( depth-2 )) - remainder;
+    *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH*(depth-2)) - remainder;
     *upper = *lower - OFFSET_WIDTH + 1;
     return;
 }
 
-uint64_t getBits1(uint64_t addr,  int left, int right)
-{
-    uint64_t num = (addr >> right) & ((1 << (left - right + 1))-1);
+uint64_t getBits(uint64_t addr, int lower, int higher){
+    uint64_t num = (addr >> lower) & ((1 << (higher - lower + 1))-1);
     return num;
 }
-
-
-
-
-uint64_t get_bits(uint64_t address, uint64_t depth)
-{
-    uint64_t left, right;
-    uint64_t remainder = ((VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH) % OFFSET_WIDTH) + depth - depth;
-    if((remainder != 0)&(depth == 1)){
-        left = VIRTUAL_ADDRESS_WIDTH - 1;
-        right = VIRTUAL_ADDRESS_WIDTH - remainder;
-    }
-    else if(remainder == 0){
-        left = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * (depth-1));
-        right = left - OFFSET_WIDTH + 1;
-    }
-    else
-    {
-        left = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * (depth-2)) - remainder;
-        right = left - OFFSET_WIDTH + 1;
-    }
-
-    uint64_t num = (address >> right) & ((1 << (left - right + 1))-1);
-    return num;
-}
-
-
 
 int main(int argc, char **argv) {
 //    VMinitialize();
@@ -80,39 +52,11 @@ int main(int argc, char **argv) {
 
     uint64_t lower = 0;
     uint64_t upper = 0;
-    std::cout << get_bits(t, 3) << std::endl;
 
+    get_range(2, &lower, &upper);
 
+    std::cout << lower << std::endl;
+    std::cout << upper << std::endl;
     return 0;
 }
 
-
-
-void get_range555(uint64_t depth, uint64_t* lower, uint64_t* upper)
-{
-    uint64_t remainder = ((VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH) % OFFSET_WIDTH) + depth - depth;
-    if((remainder != 0)&(depth == 1)){
-        *lower = VIRTUAL_ADDRESS_WIDTH - 1;
-        *upper = VIRTUAL_ADDRESS_WIDTH - remainder;
-        return;
-    }
-
-    if(remainder == 0){
-        *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * (depth-1));
-        *upper = *lower - OFFSET_WIDTH + 1;
-        return;
-    }
-
-    *lower = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * (depth-2)) - remainder;
-    *upper = *lower - OFFSET_WIDTH + 1;
-}
-
-
-/*
- * Get value of address within the range (left, right)
- */
-uint64_t getBits555(uint64_t address, uint64_t left, uint64_t right)
-{
-    uint64_t num = (address >> right) & ((1 << (left - right + 1))-1);
-    return num;
-}
