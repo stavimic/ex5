@@ -13,16 +13,21 @@ void initialize() {
     RAM.resize(NUM_FRAMES, page_t(PAGE_SIZE));
 }
 
+/*
+ * reads an integer from the given physical address and puts it in 'value'
+ */
 void PMread(uint64_t physicalAddress, word_t* value) {
     if (RAM.empty())
         initialize();
 
     assert(physicalAddress < RAM_SIZE);
 
-    *value = RAM[physicalAddress / PAGE_SIZE][physicalAddress
-             % PAGE_SIZE];
+    *value = RAM[physicalAddress / PAGE_SIZE][physicalAddress % PAGE_SIZE];
  }
 
+/*
+ * writes 'value' to the given physical address
+ */
 void PMwrite(uint64_t physicalAddress, word_t value) {
     if (RAM.empty())
         initialize();
@@ -33,6 +38,10 @@ void PMwrite(uint64_t physicalAddress, word_t value) {
              % PAGE_SIZE] = value;
 }
 
+
+/*
+ * evicts a page from the RAM to the hard drive
+ */
 void PMevict(uint64_t frameIndex, uint64_t evictedPageIndex) {
 
     if (RAM.empty())
@@ -45,6 +54,9 @@ void PMevict(uint64_t frameIndex, uint64_t evictedPageIndex) {
     swapFile[evictedPageIndex] = RAM[frameIndex];
 }
 
+/*
+ * restores a page from the hard drive to the RAM
+ */
 void PMrestore(uint64_t frameIndex, uint64_t restoredPageIndex) {
     if (RAM.empty())
         initialize();
