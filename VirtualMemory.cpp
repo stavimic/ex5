@@ -3,10 +3,6 @@
 
 
 
-
-
-
-
 void clearTable(uint64_t frameIndex)
 {
     for (uint64_t i = 0; i < PAGE_SIZE; ++i)
