@@ -1,4 +1,5 @@
 #include "VirtualMemory.h"
+#include "PhysicalMemory.h"
 
 #include <cstdio>
 #include <cassert>
@@ -31,32 +32,85 @@ uint64_t getBits(uint64_t addr, int lower, int higher){
 }
 
 int main(int argc, char **argv) {
-//    VMinitialize();
-//    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+    VMinitialize();
+
+    VMwrite(13, 3);
+    word_t ans;
+    VMread(13, &ans);
+    if (ans == 3) {
+        printf("success\n");
+    }
+    else{
+        printf("big fail\n");
+    }
+
+    for (uint64_t i = 0; i < NUM_FRAMES; ++i)
+    {
+        std::cout<<"FRAME: " << i << std::endl;
+        for (uint64_t j = 0;j < PAGE_SIZE; ++j) {
+            word_t val;
+            std::cout<<"index: " << j << std::endl;
+            PMread(i*PAGE_SIZE + j, &val);
+            std::cout<<"VAL: " << val << std::endl;
+        }
+
+    }
+
+
+
+    VMwrite(14, 5);
+    word_t ans2;
+    VMread(14, &ans2);
+    if (ans2 == 5) {
+        printf("success 2 \n");
+    }
+    else{
+        printf("big fail\n");
+    }
+
+
+
+
+//    for (uint64_t i = 0; i < (2 ); ++i) {
 //        printf("writing to %llu\n", i);
 //        VMwrite(5 * i * PAGE_SIZE, i);
 //    }
 //
-//    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+//    for (uint64_t i = 0; i < (2 ); ++i) {
 //        word_t value;
 //        VMread(5 * i * PAGE_SIZE, &value);
 //        printf("reading from %llu %d\n", i, value);
 //        assert(uint64_t(value) == i);
 //    }
-//    printf("success\n");
 
-    uint64_t t = 1302;
+
+
+//    int main(int argc, char **argv) {
+//        VMinitialize();
+//        for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+//            printf("writing to %llu\n", i);
+//            VMwrite(5 * i * PAGE_SIZE, i);
+//        }
+//
+//        for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+//            word_t value;
+//            VMread(5 * i * PAGE_SIZE, &value);
+//            printf("reading from %llu %d\n", i, value);
+//            assert(uint64_t(value) == i);
+//        }
+//        printf("success\n");
+//    uint64_t t = 1302;
 //    std::cout << getBits(t, 4, 7) << std::endl;
-//    std::cout << getBits(t, 1, 3) << std::endl;
-//    std::cout << getBits(t, 0, 10) << std::endl;
-
-    uint64_t lower = 0;
-    uint64_t upper = 0;
-
-    get_range(2, &lower, &upper);
-
-    std::cout << lower << std::endl;
-    std::cout << upper << std::endl;
+////    std::cout << getBits(t, 1, 3) << std::endl;
+////    std::cout << getBits(t, 0, 10) << std::endl;
+//
+//    uint64_t lower = 0;
+//    uint64_t upper = 0;
+//
+//    get_range(2, &lower, &upper);
+//
+//    std::cout << lower << std::endl;
+//    std::cout << upper << std::endl;
     return 0;
 }
 

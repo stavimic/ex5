@@ -1,3 +1,4 @@
+#include <bitset>
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
 
@@ -28,8 +29,6 @@ uint64_t get_bits(uint64_t address, uint64_t depth)
 }
 
 
-
-
 uint64_t remove_offset(uint64_t address)
 {
     uint64_t left = VIRTUAL_ADDRESS_WIDTH - 1;
@@ -39,7 +38,13 @@ uint64_t remove_offset(uint64_t address)
 }
 
 
-
+uint64_t get_offset(uint64_t address)
+{
+    uint64_t left = OFFSET_WIDTH;
+    uint64_t right = 0;
+    uint64_t num = (address >> right) & ((1 << (left - right + 1))-1);
+    return num;
+}
 
 void clearTable(uint64_t frameIndex)
 {
@@ -50,7 +55,6 @@ void clearTable(uint64_t frameIndex)
 }
 
 
-
 /*
  * Initialize the virtual memory
  */
@@ -58,7 +62,6 @@ void VMinitialize()
 {
     clearTable(0);
 }
-
 
 int swap_page(uint64_t oldAddress, uint64_t virtualAddress)
 {
@@ -72,33 +75,50 @@ int swap_page(uint64_t oldAddress, uint64_t virtualAddress)
  * Returns it's address upon success.
  * Returns 0 upon failure.
  */
-uint64_t find_unused_frame()
+void find_unused_frame(uint64_t root, int& counter)
 {
-    for(uint64_t index = 1; index < NUM_FRAMES; index++)
+    for (uint64_t i = 0; i < PAGE_SIZE; ++i)
     {
-        int value;
-        PMread(0 + (index * PAGE_SIZE), &value);
-        if (value == 0)
-        {
-            return index; // Return the index of the unused Frame
+        word_t value;
+        PMread((root * PAGE_SIZE) + i, &value);
+        if (value != 0) {
+            counter += 1;
+            find_unused_frame(value, counter);
         }
     }
-    return FAILURE_VALUE;  // No available Frame on the RAM
+
+    for (uint64_t i = 0; i < NUM_FRAMES; ++i)
+    {
+        for (uint64_t j = 0;j < PAGE_SIZE; ++j) {
+            word_t val;
+            PMread(i*PAGE_SIZE + j, &val);
+        }
+
+    }
 }
 
 
 uint64_t get_frame()
 {
-    uint64_t unused_index = find_unused_frame();
-    if(unused_index != FAILURE_VALUE)
+    int counter = 0;
+    find_unused_frame(0, counter);
+    if(counter != RAM_SIZE - 2)
     {
-        return unused_index;
+        return static_cast<uint64_t>(counter + 1);
     }
 
-    return 1;
+    return 0; // todo need to swap
 }
 
+uint64_t add_offset(int addr, uint64_t offset)
+{
 
+    std::string a = std::bitset<VIRTUAL_ADDRESS_WIDTH>(static_cast<unsigned long long int>(addr)).to_string();
+    std::string b = std::bitset<OFFSET_WIDTH>(offset).to_string();
+    std::string total = a + b;
+    uint64_t decimal = std::bitset<64>(total).to_ullong();
+    return decimal;
+}
 
 int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action)
 {
@@ -113,8 +133,18 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
         {
             case READ:
             {
-                // Read from the physical memory:
-                PMread((virtualAddress * PAGE_SIZE) + relevant_address, value);
+                PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
+                if(current_address == 0) // The page we're looking for does'nt exist
+                {
+                    // Find place and load the page:
+                    uint64_t victim_frame_index = get_frame();
+                    uint64_t page_index = remove_offset(virtualAddress);
+                    PMrestore(victim_frame_index, page_index);
+                    clearTable(victim_frame_index);
+                    current_address = static_cast<int>(victim_frame_index);
+                    PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
+                }
+                PMread(add_offset(parent_addr, get_offset(virtualAddress)), value);
                 break;
             }
             case REMOVE_REFERENCE:
@@ -124,7 +154,18 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
             }
             case WRITE:
             {
-                PMwrite((virtualAddress * PAGE_SIZE) + relevant_address, *value);
+              PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
+                if(current_address == 0) // The page we're looking for does'nt exist
+                {
+                    // Find place and load the page:
+                    uint64_t victim_frame_index = get_frame();
+                    uint64_t page_index = remove_offset(virtualAddress);
+                    PMrestore(victim_frame_index, page_index);
+                    clearTable(victim_frame_index);
+                    current_address = static_cast<int>(victim_frame_index);
+                    PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
+                }
+                PMwrite(add_offset(parent_addr, get_offset(virtualAddress)), *value);
                 break;
             }
         }
@@ -149,10 +190,14 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
                     // Find place and load the page:
-                    uint64_t victim_frame_index = get_frame();
-                    uint64_t page_index = remove_offset(virtualAddress);
-                    PMrestore(victim_frame_index, page_index);
+                    auto victim_frame_index = get_frame();
+//                    uint64_t page_index = remove_offset(virtualAddress);
+//                    PMrestore(victim_frame_index, page_index);
+                    clearTable(victim_frame_index);
+                    current_address = static_cast<int>(victim_frame_index);
+                    PMwrite(relevant_address, static_cast<word_t>(victim_frame_index));
                 }
+
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
             }
@@ -183,8 +228,11 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                 {
                     // Find place and load the page:
                     uint64_t victim_frame_index = get_frame();
-                    uint64_t page_index = remove_offset(virtualAddress);
-                    PMrestore(victim_frame_index, page_index);
+//                    uint64_t page_index = remove_offset(virtualAddress);
+//                    PMrestore(victim_frame_index, page_index);
+                    clearTable(victim_frame_index);
+                    current_address = static_cast<int>(victim_frame_index);
+                    PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
                 }
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
@@ -207,7 +255,8 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
  */
 int VMread(uint64_t virtualAddress, word_t* value)
 {
-    return 1;
+    int addr;
+    return traverse(virtualAddress, addr, value, 1, READ);
 }
 
 /* writes a word to the given virtual address
@@ -219,7 +268,8 @@ int VMread(uint64_t virtualAddress, word_t* value)
 
 int VMwrite(uint64_t virtualAddress, word_t value)
 {
-    return 1;
+    int addr=0;
+    return traverse(virtualAddress, addr, &value, 1, WRITE);
 }
 
 
