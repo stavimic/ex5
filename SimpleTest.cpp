@@ -31,44 +31,55 @@ uint64_t getBits(uint64_t addr, int lower, int higher){
     return num;
 }
 
+void print_vec(){
+    int counter = 0;
+    for (uint64_t i = 0; i < NUM_FRAMES; ++i)
+    {
+        for (uint64_t j = 0;j < PAGE_SIZE; ++j) {
+            word_t val;
+            PMread(i*PAGE_SIZE + j, &val);
+            std::cout<<"VAL"<<counter<<": " << val << std::endl;
+            counter++;
+        }
+        std::cout<<"----" << std::endl;
+    }
+}
+
 int main(int argc, char **argv) {
     VMinitialize();
 
-    VMwrite(13, 3);
+    int val1 = 3;
+    int val2 = 500;
+
+    VMwrite(13, val1);
     word_t ans;
     VMread(13, &ans);
-    if (ans == 3) {
+    if (ans == val1) {
         printf("success\n");
     }
     else{
         printf("big fail\n");
     }
 
-    for (uint64_t i = 0; i < NUM_FRAMES; ++i)
-    {
-        std::cout<<"FRAME: " << i << std::endl;
-        for (uint64_t j = 0;j < PAGE_SIZE; ++j) {
-            word_t val;
-            std::cout<<"index: " << j << std::endl;
-            PMread(i*PAGE_SIZE + j, &val);
-            std::cout<<"VAL: " << val << std::endl;
-        }
+    print_vec();
 
-    }
-
-
-
-    VMwrite(14, 5);
+    printf("SECONDDD\n");
     word_t ans2;
-    VMread(14, &ans2);
-    if (ans2 == 5) {
-        printf("success 2 \n");
-    }
-    else{
-        printf("big fail\n");
-    }
+    VMread(6, &ans2);
+    print_vec();
 
+    VMread(31, &ans2);
+//    VMwrite(15, val2);
+//    ans2;
+//    VMread(15, &ans2);
+//    if (ans2 == val2) {
+//        printf("success 2 \n");
+//    }
+//    else{
+//        printf("big fail\n");
+//    }
 
+//    print_vec();
 
 
 //    for (uint64_t i = 0; i < (2 ); ++i) {
