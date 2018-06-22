@@ -52,6 +52,8 @@ int main(int argc, char **argv) {
     int val2 = 500;
 
     VMwrite(13, val1);
+
+    print_vec();
     word_t ans;
     VMread(13, &ans);
     if (ans == val1) {
