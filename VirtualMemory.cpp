@@ -4,9 +4,6 @@
 #include "PhysicalMemory.h"
 
 
-
-
-
 uint64_t get_bits(uint64_t address, uint64_t depth)
 {
     uint64_t left, right;
