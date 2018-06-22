@@ -109,7 +109,7 @@ void find_unused_frame(uint64_t root, uint64_t parent_addr, uint64_t& max_index_
             }
 //            auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - value)), static_cast<uint64_t>(std::abs(static_cast<int>(page_num) - value)));
             auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - static_cast<int>(cur_address)),
-                                      static_cast<uint64_t>(std::abs(static_cast<int>(page_num) -  static_cast<int>(cur_address))));
+                    static_cast<uint64_t>(std::abs(static_cast<int>(page_num) -  static_cast<int>(cur_address))));
 
             if(current_value < min_cyclic)
             {
@@ -163,6 +163,7 @@ uint64_t get_frame(uint64_t addr)
         return static_cast<uint64_t>(max_used + 1);
     }
     VMwrite(chosen_page_address, 0); // Remove the reference from the parent node to the removed page
+
     return min_frame; // todo need to swap
 }
 
@@ -211,7 +212,7 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
             }
             case WRITE:
             {
-              PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
+                PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
                     // Find place and load the page:
