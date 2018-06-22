@@ -28,8 +28,6 @@ uint64_t get_bits(uint64_t address, uint64_t depth)
 }
 
 
-
-
 uint64_t remove_offset(uint64_t address)
 {
     uint64_t left = VIRTUAL_ADDRESS_WIDTH - 1;
@@ -39,8 +37,6 @@ uint64_t remove_offset(uint64_t address)
 }
 
 
-
-
 void clearTable(uint64_t frameIndex)
 {
     for (uint64_t i = 0; i < PAGE_SIZE; ++i)
@@ -48,7 +44,6 @@ void clearTable(uint64_t frameIndex)
         PMwrite(frameIndex * PAGE_SIZE + i, 0);
     }
 }
-
 
 
 /*
@@ -99,7 +94,6 @@ uint64_t get_frame()
 }
 
 
-
 int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action)
 {
     int current_address;
@@ -124,6 +118,7 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
             }
             case WRITE:
             {
+                // todo change the write - write to the PHYSICAL address (parent addr? )
                 PMwrite((virtualAddress * PAGE_SIZE) + relevant_address, *value);
                 break;
             }
@@ -195,9 +190,6 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
 }
 
 
-
-
-
 /* reads a word from the given virtual address
  * and puts its content in *value.
  *
@@ -221,27 +213,6 @@ int VMwrite(uint64_t virtualAddress, word_t value)
 {
     return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //
