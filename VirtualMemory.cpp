@@ -129,7 +129,8 @@ std::string concat_addresses(const std::string& addr, uint64_t current_num)
  * Returns 0 upon failure.
  */
 void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_index_frame, uint64_t& min_cyclic,
-                       uint64_t& min_frame, uint64_t& page_num, uint64_t depth, const std::string& cur_virtual_address,uint64_t & parent_page_cyclic, uint64_t& chosen_page,
+                       uint64_t& min_frame, uint64_t& page_num, uint64_t depth, const std::string& cur_virtual_address,
+                       uint64_t & parent_page_cyclic, uint64_t& chosen_page,
                        uint64_t& empty_frame, uint64_t& parent_empty_frame_addr, uint64_t& mega_parent)
 {
     int value;
@@ -160,7 +161,8 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
                 min_cyclic = static_cast<uint64_t>(minimal_value);
                 min_frame = static_cast<uint64_t>(value);
                 chosen_page = cur_address;
-                parent_page_cyclic = std::bitset<64>(cur_virtual_address).to_ullong();
+//                parent_page_cyclic = std::bitset<64>(cur_virtual_address).to_ullong();
+                parent_page_cyclic = cur_frame_index;
             }
         }
         if(amount_Zeros == PAGE_SIZE)
@@ -236,12 +238,13 @@ uint64_t get_frame(uint64_t addr)
         return static_cast<uint64_t>(max_used + 1);
     }
     if(min_frame != 0) {
-//        print_vec2();
+        print_vec2();
 //        VMwrite(chosen_page_cyclic, 0); // Remove the reference from the parent node to the removed page
         PMevict(min_frame, chosen_page_cyclic);
+//        PMwrite(parent_frame_cyclic*PAGE_SIZE + get_offset(addr), 0);
         PMwrite(parent_frame_cyclic*PAGE_SIZE + get_offset(addr), 0);
-//        std::cout << "2222222222222" << std::endl;
-//        print_vec2();
+        std::cout << "2222222222222" << std::endl;
+        print_vec2();
         return min_frame;
 
     }
