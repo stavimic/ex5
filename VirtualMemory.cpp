@@ -8,11 +8,13 @@ uint64_t get_bits(uint64_t address, uint64_t depth)
 {
     uint64_t left, right;
     uint64_t remainder = ((VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH) % OFFSET_WIDTH) + depth - depth;
-    if((remainder != 0)&(depth == 1)){
+    if((remainder != 0)&(depth == 1))
+    {
         left = VIRTUAL_ADDRESS_WIDTH - 1;
         right = VIRTUAL_ADDRESS_WIDTH - remainder;
     }
-    else if(remainder == 0){
+    else if(remainder == 0)
+    {
         left = (VIRTUAL_ADDRESS_WIDTH - 1) - (OFFSET_WIDTH * (depth-1));
         right = left - OFFSET_WIDTH + 1;
     }
@@ -77,14 +79,12 @@ uint64_t min2(uint64_t a, uint64_t b)
 }
 
 
-
 std::string concat_addresses(const std::string& addr, uint64_t current_num)
 {
     std::string right = std::bitset<OFFSET_WIDTH>(current_num).to_string();
     std::string total = addr + right;
     return total;
 }
-
 
 
 /*
@@ -107,7 +107,6 @@ void find_unused_frame(uint64_t root, uint64_t parent_addr, uint64_t& max_index_
             {
                 max_index_frame = static_cast<uint64_t>(value);
             }
-//            auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - value)), static_cast<uint64_t>(std::abs(static_cast<int>(page_num) - value)));
             auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - static_cast<int>(cur_address)),
                     static_cast<uint64_t>(std::abs(static_cast<int>(page_num) -  static_cast<int>(cur_address))));
 
@@ -132,13 +131,6 @@ void find_unused_frame(uint64_t root, uint64_t parent_addr, uint64_t& max_index_
         {
             max_index_frame = static_cast<uint64_t>(cur_frame_index);
         }
-//        auto m = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(p_num) - value)),
-//                      static_cast<uint64_t>(std::abs(static_cast<int>(p_num) - value)));
-//        if( m < min_cyclic){
-//            min_cyclic = static_cast<uint64_t>(m);
-//            min_page = static_cast<uint64_t>(cur_frame);
-//
-//        }
         find_unused_frame(cur_frame_index*PAGE_SIZE, root, max_index_frame, min_cyclic, min_frame,
                           page_num, depth + 1, concat_addresses(cur_virtual_address, static_cast<uint64_t>(i)), chosen_page_address);
     }
