@@ -108,8 +108,8 @@ void find_unused_frame(uint64_t root, uint64_t parent_addr, uint64_t& max_index_
                 max_index_frame = static_cast<uint64_t>(value);
             }
 //            auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - value)), static_cast<uint64_t>(std::abs(static_cast<int>(page_num) - value)));
-            auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - static_cast<int>(cur_address)),
-                    static_cast<uint64_t>(std::abs(static_cast<int>(page_num) -  static_cast<int>(cur_address))));
+            auto current_value = min2(static_cast<uint64_t>(NUM_PAGES - std::abs(static_cast<int>(page_num) - static_cast<int>(cur_address))),
+                    static_cast<uint64_t>(std::abs(static_cast<int>(page_num) - static_cast<int>(cur_address))));
 
             if(current_value < min_cyclic)
             {
