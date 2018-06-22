@@ -195,12 +195,11 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
                     // Find place and load the page:
-                    uint64_t victim_frame_index = get_frame(virtualAddress);
+                    uint64_t victim_frame_index = parent_addr;
                     uint64_t page_index = remove_offset(virtualAddress);
                     PMrestore(victim_frame_index, page_index);
                     clearTable(victim_frame_index);
                     current_address = static_cast<int>(victim_frame_index);
-                    PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
                 }
                 PMwrite(add_offset(parent_addr, get_offset(virtualAddress)), *value);
                 break;
