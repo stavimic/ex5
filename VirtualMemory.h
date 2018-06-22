@@ -8,6 +8,7 @@
 
 enum actions {READ, WRITE, REMOVE_REFERENCE};
 
+
 /*
  * Initialize the virtual memory
  */
