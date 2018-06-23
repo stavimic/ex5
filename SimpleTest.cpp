@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
     print_vec();
     word_t ans;
     VMread(13, &ans);
-    if (ans == val1) {
+    if (ans == val1)
+    {
         printf("success\n");
     }
     else{
@@ -71,6 +72,31 @@ int main(int argc, char **argv) {
     print_vec();
 
     VMread(31, &ans2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //    VMwrite(15, val2);
 //    ans2;
 //    VMread(15, &ans2);
