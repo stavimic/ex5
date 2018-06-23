@@ -2,12 +2,6 @@
 
 #include "MemoryConstants.h"
 
-#define SUCCESS_VALUE 1
-#define FAILURE_VALUE 0
-
-
-enum actions {READ, WRITE, REMOVE_REFERENCE};
-
 
 /*
  * Initialize the virtual memory
