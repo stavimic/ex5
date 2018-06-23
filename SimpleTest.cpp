@@ -81,11 +81,12 @@ void print_vec(){
 
 int main(int argc, char **argv) {
     VMinitialize();
-    print_vec();
-    std::cout<<"--------------------------" << std::endl;
+//    print_vec();
+//    std::cout<<"--------------------------" << std::endl;
     for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+        auto index = 5 * i * PAGE_SIZE;
         printf("writing to %llu\n", (long long int) i);
-        VMwrite(5 * i * PAGE_SIZE, i);
+        VMwrite(index, i);
 //        print_vec();
 //        std::cout<<"--------------------------" << std::endl;
     }
