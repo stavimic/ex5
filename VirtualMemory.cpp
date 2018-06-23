@@ -147,11 +147,6 @@ void delete_son(uint64_t son_frame, uint64_t root)
     }
 }
 
-
-
-
-
-
 /*
  * Finds an unused Frame on the RAM.
  * Returns it's address upon success.
@@ -161,7 +156,8 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
                        uint64_t& min_frame, uint64_t& page_num, uint64_t depth, const std::string& cur_virtual_address,
                        uint64_t & parent_page_cyclic, uint64_t& chosen_page,
                        uint64_t& empty_frame, uint64_t& parent_empty_frame_addr,
-                       uint64_t& mega_parent, uint64_t& cyclic_frame_reference, uint64_t& empty_frame_reference, uint64_t& physical_addr)
+                       uint64_t& mega_parent, uint64_t& cyclic_frame_reference,
+                       uint64_t& empty_frame_reference, uint64_t& physical_addr, uint64_t forbidden_frame)
 {
     int value;
     int amount_Zeros = 0;
@@ -198,14 +194,13 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
         if(amount_Zeros == PAGE_SIZE)
         {
             auto parent_empty_addr = std::bitset<64>(cur_virtual_address).to_ullong();
-            if((get_parent_addr(page_num, depth) != parent_empty_addr) && (empty_frame == 0))
+//            if((get_parent_addr(page_num, depth) != parent_empty_addr) && (empty_frame == 0))
+            if((cur_frame_index != forbidden_frame) and  (empty_frame == 0))
             {
                 empty_frame = cur_frame_index;
                 parent_empty_frame_addr = mega_parent;
                 empty_frame_reference = physical_addr;
-
             }
-
         }
         return;
     }
@@ -226,13 +221,14 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
         find_unused_frame(cur_row*PAGE_SIZE, cur_row, max_index_frame, min_cyclic, min_frame,
                           page_num, depth + 1, concat_addresses(cur_virtual_address, static_cast<uint64_t>(i)),
                           parent_page_cyclic, chosen_page, empty_frame, parent_empty_frame_addr, cur_frame_index,
-                          cyclic_frame_reference, empty_frame_reference, physical_addr);
+                          cyclic_frame_reference, empty_frame_reference, physical_addr, forbidden_frame);
     }
 
     if(amount_Zeros == PAGE_SIZE)
     {
         auto parent_empty_addr = std::bitset<64>(cur_virtual_address).to_ullong();
-        if((get_parent_addr(page_num, depth) != parent_empty_addr) and (empty_frame == 0))
+//        if((get_parent_addr(page_num, depth) != parent_empty_addr) and (empty_frame == 0))
+        if((cur_frame_index != forbidden_frame) and (empty_frame == 0))
         {
             empty_frame = cur_frame_index;
             parent_empty_frame_addr = mega_parent;
@@ -243,7 +239,7 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
 }
 
 
-uint64_t get_frame(uint64_t addr, uint64_t depth)
+uint64_t get_frame(uint64_t addr, uint64_t depth, uint64_t forbidden_frame)
 {
     // todo we need to evict in cyclic min page ! and not frame
     uint64_t max_used = 0;
@@ -263,7 +259,7 @@ uint64_t get_frame(uint64_t addr, uint64_t depth)
 
     find_unused_frame(0, 0, max_used, max_cyclic, min_frame, page_num, 1, "", parent_frame_cyclic,
                       chosen_page_cyclic, empty_frame, parent_empty_frame_addr
-            , mega_parent_frame_index, cyclic_frame_ref, empty_frame_ref, physical_addr);
+            , mega_parent_frame_index, cyclic_frame_ref, empty_frame_ref, physical_addr, forbidden_frame);
 
 
     if(empty_frame != 0)
@@ -296,7 +292,7 @@ uint64_t add_offset(int addr, uint64_t offset)
     return decimal;
 }
 
-int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action)
+int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t depth, actions action, int forbidden_frame)
 {
     int current_address;
     // Get the value of the address within the current depth:
@@ -345,17 +341,18 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
             default:  // Read or Write
             {
                 PMread(0 + relevant_address, &current_address);
+                uint64_t victim_frame_index = 0;
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
                     // Find place and load the page:
-                    auto victim_frame_index = get_frame(virtualAddress, depth);
+                    victim_frame_index = get_frame(virtualAddress, depth, forbidden_frame);
                     clearTable(victim_frame_index);
                     current_address = static_cast<int>(victim_frame_index);
                     PMwrite(relevant_address, static_cast<word_t>(victim_frame_index));
                 }
 //                std::cout << "3333333333" << std::endl;
 //                print_vec2();
-                traverse(virtualAddress, current_address, value, depth + 1, action);
+                traverse(virtualAddress, current_address, value, depth + 1, action, victim_frame_index);
                 break;
             }
         }
@@ -368,16 +365,18 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
             default:  // Read or Write
             {
                 PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
+                uint64_t victim_frame_index = 0;
+
                 if(current_address == 0) // The page we're looking for does'nt exist
                 {
                     // Find place and load the page:
-                    uint64_t victim_frame_index = get_frame(virtualAddress, depth);
+                    victim_frame_index = get_frame(virtualAddress, depth, forbidden_frame);
                     clearTable(victim_frame_index);
                     current_address = static_cast<int>(victim_frame_index);
                     PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
 
                 }
-                traverse(virtualAddress, current_address, value, depth + 1, action);
+                traverse(virtualAddress, current_address, value, depth + 1, action, victim_frame_index);
                 break;
             }
         }
@@ -395,7 +394,7 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
 int VMread(uint64_t virtualAddress, word_t* value)
 {
     int addr;
-    return traverse(virtualAddress, addr, value, 1, READ);
+    return traverse(virtualAddress, addr, value, 1, READ, 0);
 }
 
 /* writes a word to the given virtual address
@@ -408,7 +407,7 @@ int VMread(uint64_t virtualAddress, word_t* value)
 int VMwrite(uint64_t virtualAddress, word_t value)
 {
     int addr=0;
-    return traverse(virtualAddress, addr, &value, 1, WRITE);
+    return traverse(virtualAddress, addr, &value, 1, WRITE, 0);
 }
 
 

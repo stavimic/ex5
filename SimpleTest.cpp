@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
     for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
         printf("writing to %llu\n", (long long int) i);
         VMwrite(5 * i * PAGE_SIZE, i);
-        print_vec();
-        std::cout<<"--------------------------" << std::endl;
+//        print_vec();
+//        std::cout<<"--------------------------" << std::endl;
     }
 
     for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
