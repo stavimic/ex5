@@ -45,111 +45,60 @@ void print_vec(){
     }
 }
 
-int main(int argc, char **argv) {
-    VMinitialize();
-
-    int val1 = 3;
-    int val2 = 500;
-
-    VMwrite(13, val1);
-
-    print_vec();
-    word_t ans;
-    VMread(13, &ans);
-    if (ans == val1)
-    {
-        printf("success\n");
-    }
-    else{
-        printf("big fail\n");
-    }
-
-    print_vec();
-
-    printf("SECONDDD\n");
-    word_t ans2;
-    VMread(6, &ans2);
-    print_vec();
-
-    VMread(31, &ans2);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    VMwrite(15, val2);
-//    ans2;
-//    VMread(15, &ans2);
-//    if (ans2 == val2) {
-//        printf("success 2 \n");
+//int main(int argc, char **argv) {
+//    VMinitialize();
+//
+//    int val1 = 3;
+//    int val2 = 500;
+//
+//    VMwrite(13, val1);
+//
+//    print_vec();
+//    word_t ans;
+//    VMread(13, &ans);
+//    if (ans == val1)
+//    {
+//        printf("success\n");
 //    }
 //    else{
 //        printf("big fail\n");
 //    }
-
+//
 //    print_vec();
-
-
-//    for (uint64_t i = 0; i < (2 ); ++i) {
-//        printf("writing to %llu\n", i);
-//        VMwrite(5 * i * PAGE_SIZE, i);
-//    }
 //
-//    for (uint64_t i = 0; i < (2 ); ++i) {
-//        word_t value;
-//        VMread(5 * i * PAGE_SIZE, &value);
-//        printf("reading from %llu %d\n", i, value);
-//        assert(uint64_t(value) == i);
-//    }
+//    printf("SECONDDD\n");
+//    word_t ans2;
+//    VMread(6, &ans2);
+//    print_vec();
+//
+//    VMread(31, &ans2);
+
+//}
 
 
 
-//    int main(int argc, char **argv) {
-//        VMinitialize();
-//        for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
-//            printf("writing to %llu\n", i);
-//            VMwrite(5 * i * PAGE_SIZE, i);
-//        }
-//
-//        for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
-//            word_t value;
-//            VMread(5 * i * PAGE_SIZE, &value);
-//            printf("reading from %llu %d\n", i, value);
-//            assert(uint64_t(value) == i);
-//        }
-//        printf("success\n");
-//    uint64_t t = 1302;
-//    std::cout << getBits(t, 4, 7) << std::endl;
-////    std::cout << getBits(t, 1, 3) << std::endl;
-////    std::cout << getBits(t, 0, 10) << std::endl;
-//
-//    uint64_t lower = 0;
-//    uint64_t upper = 0;
-//
-//    get_range(2, &lower, &upper);
-//
-//    std::cout << lower << std::endl;
-//    std::cout << upper << std::endl;
+
+
+int main(int argc, char **argv) {
+    VMinitialize();
+    print_vec();
+    std::cout<<"--------------------------" << std::endl;
+    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+        printf("writing to %llu\n", (long long int) i);
+        VMwrite(5 * i * PAGE_SIZE, i);
+        print_vec();
+        std::cout<<"--------------------------" << std::endl;
+    }
+
+    for (uint64_t i = 0; i < (2 * NUM_FRAMES); ++i) {
+        word_t value;
+        VMread(5 * i * PAGE_SIZE, &value);
+        printf("reading from %llu %d\n", (long long int) i, value);
+//        print_vec();
+//        std::cout<<"--------------------------" << std::endl;
+        assert(uint64_t(value) == i);
+    }
+    printf("success\n");
+
     return 0;
 }
-

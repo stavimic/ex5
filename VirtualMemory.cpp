@@ -30,23 +30,28 @@ uint64_t get_parent_addr(uint64_t page_num, uint64_t depth)
 {
     uint64_t left, right;
     uint64_t remainder = ((VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH) % OFFSET_WIDTH) + depth - depth;
-    if((remainder != 0)&(depth == 1)){
+    if((remainder != 0)&(depth == 1))
+    {
         left = VIRTUAL_ADDRESS_WIDTH - 1;
         right = VIRTUAL_ADDRESS_WIDTH - remainder;
     }
-    else if(remainder == 0){
+    else if(remainder == 0)
+    {
         left = (VIRTUAL_ADDRESS_WIDTH - 1) ;
         right = (VIRTUAL_ADDRESS_WIDTH - 1) -  (depth *OFFSET_WIDTH);
     }
     else
     {
         left = (VIRTUAL_ADDRESS_WIDTH - 1);
-        right = (VIRTUAL_ADDRESS_WIDTH - 1) -  (depth-1)*OFFSET_WIDTH - remainder;
+//        right = (VIRTUAL_ADDRESS_WIDTH - 1) -  (depth-1)*OFFSET_WIDTH - remainder;
+        right = (VIRTUAL_ADDRESS_WIDTH - 1) -  (depth-1)*OFFSET_WIDTH;
     }
 
     uint64_t num = (page_num >> right) & ((1 << (left - right + 1))-1);
     return num;
 }
+
+
 
 uint64_t remove_offset(uint64_t address)
 {
@@ -122,6 +127,30 @@ std::string concat_addresses(const std::string& addr, uint64_t current_num)
 }
 
 
+void delete_son(uint64_t son_frame, uint64_t root)
+{
+    for(int i = 0; i < PAGE_SIZE; i++)
+    {
+        int cur_row;
+        PMread(root + i, &cur_row);
+        if(cur_row == 0)
+        {
+            continue;
+        }
+        if(cur_row == son_frame)
+        {
+            PMwrite((root * PAGE_SIZE) + i, 0);
+            return;
+        }
+
+        delete_son(cur_row*PAGE_SIZE, son_frame);
+    }
+}
+
+
+
+
+
 
 /*
  * Finds an unused Frame on the RAM.
@@ -132,7 +161,7 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
                        uint64_t& min_frame, uint64_t& page_num, uint64_t depth, const std::string& cur_virtual_address,
                        uint64_t & parent_page_cyclic, uint64_t& chosen_page,
                        uint64_t& empty_frame, uint64_t& parent_empty_frame_addr,
-                       uint64_t& mega_parent, uint64_t& cyc_d, uint64_t& empty_d)
+                       uint64_t& mega_parent, uint64_t& cyclic_frame_reference, uint64_t& empty_frame_reference, uint64_t& physical_addr)
 {
     int value;
     int amount_Zeros = 0;
@@ -148,7 +177,7 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
             {
                 max_index_frame = static_cast<uint64_t>(value);
             }
-            if(value == 0)
+            if(value == 0)  // empty registry
             {
                 amount_Zeros++;
                 continue;
@@ -163,17 +192,17 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
                 min_frame = static_cast<uint64_t>(value);
                 chosen_page = cur_address;
                 parent_page_cyclic = std::bitset<64>(cur_virtual_address).to_ullong();
-                cyc_d = depth;
+                cyclic_frame_reference = root + j;  // reference to the chosen page
             }
         }
         if(amount_Zeros == PAGE_SIZE)
         {
             auto parent_empty_addr = std::bitset<64>(cur_virtual_address).to_ullong();
-            if((get_parent_addr(page_num, depth - 1) != parent_empty_addr) && (empty_frame == 0))
+            if((get_parent_addr(page_num, depth) != parent_empty_addr) && (empty_frame == 0))
             {
                 empty_frame = cur_frame_index;
                 parent_empty_frame_addr = mega_parent;
-                empty_d = depth;
+                empty_frame_reference = physical_addr;
 
             }
 
@@ -193,19 +222,21 @@ void find_unused_frame(uint64_t root, uint64_t cur_frame_index, uint64_t& max_in
         {
             max_index_frame = static_cast<uint64_t>(cur_row);
         }
+        physical_addr = root + i;
         find_unused_frame(cur_row*PAGE_SIZE, cur_row, max_index_frame, min_cyclic, min_frame,
                           page_num, depth + 1, concat_addresses(cur_virtual_address, static_cast<uint64_t>(i)),
-                          parent_page_cyclic, chosen_page, empty_frame, parent_empty_frame_addr, cur_frame_index, cyc_d, empty_d);
+                          parent_page_cyclic, chosen_page, empty_frame, parent_empty_frame_addr, cur_frame_index,
+                          cyclic_frame_reference, empty_frame_reference, physical_addr);
     }
 
     if(amount_Zeros == PAGE_SIZE)
     {
         auto parent_empty_addr = std::bitset<64>(cur_virtual_address).to_ullong();
-        if((get_parent_addr(page_num, depth - 1) != parent_empty_addr) and (empty_frame == 0))
+        if((get_parent_addr(page_num, depth) != parent_empty_addr) and (empty_frame == 0))
         {
             empty_frame = cur_frame_index;
             parent_empty_frame_addr = mega_parent;
-            empty_d = depth;
+            empty_frame_reference = physical_addr;
         }
 
     }
@@ -225,23 +256,19 @@ uint64_t get_frame(uint64_t addr, uint64_t depth)
     uint64_t parent_empty_frame_addr = 0;
     uint64_t mega_parent_frame_index = 0;
 
-    uint64_t d_cyc = 0;
-    uint64_t d_empt = 0;
+    uint64_t cyclic_frame_ref = 0;
+    uint64_t empty_frame_ref = 0;
+    uint64_t physical_addr = 0;
+
 
     find_unused_frame(0, 0, max_used, max_cyclic, min_frame, page_num, 1, "", parent_frame_cyclic,
                       chosen_page_cyclic, empty_frame, parent_empty_frame_addr
-            , mega_parent_frame_index, d_cyc, d_empt);
+            , mega_parent_frame_index, cyclic_frame_ref, empty_frame_ref, physical_addr);
 
 
     if(empty_frame != 0)
     {
-        uint64_t index = get_bits(addr, d_empt);
-
-//        PMwrite(parent_empty_frame_addr*PAGE_SIZE + get_offset(addr), 0);
-        auto j = (parent_empty_frame_addr * PAGE_SIZE) + index;
-        PMwrite(j, 0);
-        std::cout << "3333333333" << std::endl;
-        print_vec2();
+        PMwrite(empty_frame_ref, 0);
         return empty_frame;
 
     }
@@ -251,14 +278,9 @@ uint64_t get_frame(uint64_t addr, uint64_t depth)
     }
     if(min_frame != 0)
     {
-        uint64_t index = get_bits(addr, d_cyc);
 
         PMevict(min_frame, chosen_page_cyclic);
-//        PMwrite(parent_frame_cyclic*PAGE_SIZE + get_offset(addr), 0);
-        auto i = (parent_frame_cyclic * PAGE_SIZE) + index -1;
-        PMwrite(i, 0);
-        std::cout << "3333333333" << std::endl;
-        print_vec2();
+        PMwrite(cyclic_frame_ref, 0);
         return min_frame;
 
     }
@@ -294,15 +316,8 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                     uint64_t victim_frame_index = parent_addr;
                     uint64_t page_index = remove_offset(virtualAddress);
                     PMrestore(victim_frame_index, page_index);
-                    clearTable(victim_frame_index);
-                    current_address = static_cast<int>(victim_frame_index);
                 }
                 PMread(add_offset(parent_addr, get_offset(virtualAddress)), value);
-                break;
-            }
-            case REMOVE_REFERENCE:
-            {
-                PMwrite(static_cast<uint64_t>(parent_addr), 0);
                 break;
             }
             case WRITE:
@@ -327,15 +342,6 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
     {
         switch (action)
         {
-            case REMOVE_REFERENCE:
-            {
-                PMread(0 + relevant_address, &current_address);
-                if(current_address != 0) // Nothing to do here
-                {
-                    traverse(virtualAddress, current_address, value, depth + 1, action);
-                }
-                break;
-            }
             default:  // Read or Write
             {
                 PMread(0 + relevant_address, &current_address);
@@ -347,6 +353,8 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                     current_address = static_cast<int>(victim_frame_index);
                     PMwrite(relevant_address, static_cast<word_t>(victim_frame_index));
                 }
+//                std::cout << "3333333333" << std::endl;
+//                print_vec2();
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
             }
@@ -357,19 +365,6 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
     {
         switch (action)
         {
-            case REMOVE_REFERENCE:
-            {
-                PMread(0 + relevant_address, &current_address);
-                if(current_address == 0)
-                {
-                    PMwrite(static_cast<uint64_t>(parent_addr), 0);
-                }
-                else
-                {
-                    traverse(virtualAddress, current_address, value, depth + 1, action);
-                }
-                break;
-            }
             default:  // Read or Write
             {
                 PMread(parent_addr * PAGE_SIZE + relevant_address, &current_address);
@@ -382,8 +377,6 @@ int traverse(uint64_t virtualAddress, int& parent_addr, word_t* value, uint64_t 
                     PMwrite(parent_addr * PAGE_SIZE + relevant_address, static_cast<word_t>(victim_frame_index));
 
                 }
-                std::cout << "3333333333" << std::endl;
-                print_vec2();
                 traverse(virtualAddress, current_address, value, depth + 1, action);
                 break;
             }

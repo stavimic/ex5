@@ -8,9 +8,12 @@ typedef int word_t;
 
 #define WORD_WIDTH (sizeof(word_t) * CHAR_BIT)
 
+
+
+
 // number of bits in the offset,
 // in this implementation this is also the number of entries in a table
-#define OFFSET_WIDTH 1
+#define OFFSET_WIDTH 4
 // page/frame size in words
 // 2^OFFSET_WIDTH
 #define PAGE_SIZE (1LL << OFFSET_WIDTH)
@@ -32,7 +35,6 @@ typedef int word_t;
 #define NUM_PAGES (VIRTUAL_MEMORY_SIZE / PAGE_SIZE)
 
 #define TABLES_DEPTH ((VIRTUAL_ADDRESS_WIDTH - 1) / OFFSET_WIDTH)
-
 
 //// number of bits in the offset,
 //// in this implementation this is also the number of entries in a table
